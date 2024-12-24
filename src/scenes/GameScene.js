@@ -93,6 +93,12 @@ export default class GameScene extends Phaser.Scene {
         this.cursors = this.input.keyboard.createCursorKeys();
         this.isInvulnerable = false;
         this.detectionRange = 200;
+        
+        // Dodaj obsługę klawisza ESC
+        this.escKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
+        
+        // Flaga wskazująca czy gra jest zapauzowana
+        this.isPaused = false;
     }
 
     createEnemy(enemy) {
@@ -274,6 +280,16 @@ export default class GameScene extends Phaser.Scene {
     update() {
         if (!this.player || !this.player.body || !this.player.body.enable) return;
 
+        // Sprawdź czy wciśnięto ESC
+        if (Phaser.Input.Keyboard.JustDown(this.escKey)) {
+            if (!this.isPaused) {
+                this.showPauseMenu();
+            }
+        }
+
+        // Jeśli gra jest zapauzowana, nie aktualizuj logiki gry
+        if (this.isPaused) return;
+
         // Sterowanie graczem
         if (this.cursors.left.isDown) {
             this.player.body.setVelocityX(-160);
@@ -335,6 +351,88 @@ export default class GameScene extends Phaser.Scene {
                 
                 enemy.body.setVelocityX(enemy.baseSpeed * enemy.direction);
             }
+        });
+    }
+
+    showPauseMenu() {
+        // Zatrzymaj grę
+        this.isPaused = true;
+        this.physics.pause();
+
+        // Przyciemnij tło
+        const overlay = this.add.rectangle(0, 0, this.game.config.width, this.game.config.height, 0x000000, 0.7);
+        overlay.setOrigin(0);
+
+        // Kontener menu pauzy
+        const menuContainer = this.add.container(400, 300);
+
+        // Tytuł menu
+        const title = this.add.text(0, -100, 'PAUZA', {
+            fontSize: '48px',
+            fill: '#fff'
+        });
+        title.setOrigin(0.5);
+
+        // Przyciski menu
+        const buttonStyle = {
+            fontSize: '32px',
+            fill: '#fff',
+            backgroundColor: '#000',
+            padding: { x: 20, y: 10 }
+        };
+
+        const resumeButton = this.add.text(0, -20, 'Kontynuuj', buttonStyle);
+        resumeButton.setOrigin(0.5);
+        resumeButton.setInteractive({ useHandCursor: true });
+
+        const menuButton = this.add.text(0, 40, 'Wróć do menu', buttonStyle);
+        menuButton.setOrigin(0.5);
+        menuButton.setInteractive({ useHandCursor: true });
+
+        // Dodaj efekty hover dla przycisków
+        [resumeButton, menuButton].forEach(button => {
+            button.on('pointerover', () => {
+                button.setScale(1.1);
+                button.setStyle({ fill: '#0000ff' });
+            });
+
+            button.on('pointerout', () => {
+                button.setScale(1);
+                button.setStyle({ fill: '#fff' });
+            });
+        });
+
+        // Obsługa kliknięć
+        resumeButton.on('pointerdown', () => {
+            // Usuń menu pauzy
+            menuContainer.destroy();
+            overlay.destroy();
+            
+            // Wznów grę
+            this.isPaused = false;
+            this.physics.resume();
+        });
+
+        menuButton.on('pointerdown', () => {
+            // Wróć do menu głównego
+            this.scene.start('MenuScene');
+        });
+
+        // Dodaj elementy do kontenera
+        menuContainer.add([title, resumeButton, menuButton]);
+
+        // Dodaj obsługę ponownego naciśnięcia ESC
+        const escHandler = (event) => {
+            if (event.keyCode === Phaser.Input.Keyboard.KeyCodes.ESC) {
+                resumeButton.emit('pointerdown');
+            }
+        };
+        
+        this.input.keyboard.on('keydown-ESC', escHandler);
+
+        // Usuń listener gdy menu jest zamykane
+        menuContainer.on('destroy', () => {
+            this.input.keyboard.off('keydown-ESC', escHandler);
         });
     }
 }
