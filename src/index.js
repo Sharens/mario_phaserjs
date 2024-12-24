@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import MenuScene from './scenes/MenuScene';
 import GameScene from './scenes/GameScene';
 
 const config = {
@@ -10,10 +11,11 @@ const config = {
     physics: {
         default: 'arcade',
         arcade: {
-            gravity: { y: 300 }
+            gravity: { y: 300 },
+            debug: false
         }
     },
-    scene: GameScene
+    scene: [MenuScene, GameScene]
 };
 
 window.onload = () => {

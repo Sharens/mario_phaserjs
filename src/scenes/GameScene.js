@@ -168,8 +168,28 @@ export default class GameScene extends Phaser.Scene {
         });
         gameOverText.setOrigin(0.5);
         
-        this.time.delayedCall(3000, () => {
-            this.scene.restart();
+        // Dodaj przycisk powrotu do menu
+        const menuButton = this.add.text(400, 400, 'Powrót do Menu', {
+            fontSize: '32px',
+            fill: '#000',
+            backgroundColor: '#fff',
+            padding: { x: 20, y: 10 }
+        });
+        menuButton.setOrigin(0.5);
+        menuButton.setInteractive({ useHandCursor: true });
+        
+        menuButton.on('pointerover', () => {
+            menuButton.setScale(1.1);
+            menuButton.setStyle({ fill: '#0000ff' });
+        });
+
+        menuButton.on('pointerout', () => {
+            menuButton.setScale(1);
+            menuButton.setStyle({ fill: '#000' });
+        });
+
+        menuButton.on('pointerdown', () => {
+            this.scene.start('MenuScene');
         });
     }
 
@@ -191,17 +211,37 @@ export default class GameScene extends Phaser.Scene {
         });
         winText.setOrigin(0.5);
         
-        // Animacja pulsowania galaktyki
+        // Dodaj przycisk powrotu do menu
+        const menuButton = this.add.text(400, 400, 'Powrót do Menu', {
+            fontSize: '32px',
+            fill: '#000',
+            backgroundColor: '#fff',
+            padding: { x: 20, y: 10 }
+        });
+        menuButton.setOrigin(0.5);
+        menuButton.setInteractive({ useHandCursor: true });
+        
+        menuButton.on('pointerover', () => {
+            menuButton.setScale(1.1);
+            menuButton.setStyle({ fill: '#0000ff' });
+        });
+
+        menuButton.on('pointerout', () => {
+            menuButton.setScale(1);
+            menuButton.setStyle({ fill: '#000' });
+        });
+
+        menuButton.on('pointerdown', () => {
+            this.scene.start('MenuScene');
+        });
+        
+        // Animacja punktu końcowego
         this.tweens.add({
             targets: finishPoint,
             scale: 1.2,
             duration: 200,
             yoyo: true,
             repeat: 4
-        });
-        
-        this.time.delayedCall(3000, () => {
-            this.scene.restart();
         });
     }
 
