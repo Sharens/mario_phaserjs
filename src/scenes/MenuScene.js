@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { levels } from '../config/levels';
 
 export default class MenuScene extends Phaser.Scene {
     constructor() {
@@ -7,7 +8,7 @@ export default class MenuScene extends Phaser.Scene {
 
     create() {
         // Tytuł gry
-        const title = this.add.text(400, 120, '🐧 Pingwin Adventure 🌌', {
+        const title = this.add.text(400, 80, '🐧 Pingwin Adventure 🌌', {
             fontSize: '48px',
             fill: '#000',
             backgroundColor: '#fff',
@@ -16,7 +17,7 @@ export default class MenuScene extends Phaser.Scene {
         title.setOrigin(0.5);
 
         // Instrukcja
-        const instructions = this.add.text(400, 250, 
+        const instructions = this.add.text(400, 180, 
             '🎮 Sterowanie:\n' +
             '← → Ruch\n' +
             '↑ Skok\n\n' +
@@ -32,8 +33,52 @@ export default class MenuScene extends Phaser.Scene {
         });
         instructions.setOrigin(0.5);
 
-        // Przycisk Play - teraz poniżej instrukcji
-        const playButton = this.add.text(400, 450, 'Play 🎮', {
+        // Tekst "Wybierz poziom"
+        const levelSelectText = this.add.text(400, 320, 'Wybierz poziom:', {
+            fontSize: '32px',
+            fill: '#000',
+            backgroundColor: '#fff',
+            padding: { x: 20, y: 10 }
+        });
+        levelSelectText.setOrigin(0.5);
+
+        // Przyciski poziomów
+        const buttonWidth = 80;
+        const spacing = 20;
+        const totalWidth = (levels.length * buttonWidth) + ((levels.length - 1) * spacing);
+        const startX = 400 - (totalWidth / 2) + (buttonWidth / 2);
+
+        levels.forEach((level, index) => {
+            const x = startX + (index * (buttonWidth + spacing));
+            const levelButton = this.add.text(x, 380, `${index + 1}`, {
+                fontSize: '32px',
+                fill: '#000',
+                backgroundColor: '#fff',
+                padding: { x: 15, y: 10 }
+            });
+            
+            levelButton.setOrigin(0.5);
+            levelButton.setInteractive({ useHandCursor: true });
+
+            // Efekty hover
+            levelButton.on('pointerover', () => {
+                levelButton.setScale(1.1);
+                levelButton.setStyle({ fill: '#0000ff' });
+            });
+
+            levelButton.on('pointerout', () => {
+                levelButton.setScale(1);
+                levelButton.setStyle({ fill: '#000' });
+            });
+
+            // Rozpoczęcie wybranego poziomu
+            levelButton.on('pointerdown', () => {
+                this.startGame(index);
+            });
+        });
+
+        // Przycisk "Play od poziomu 1"
+        const playButton = this.add.text(400, 480, 'Play od początku 🎮', {
             fontSize: '32px',
             fill: '#000',
             backgroundColor: '#fff',
@@ -42,7 +87,7 @@ export default class MenuScene extends Phaser.Scene {
         playButton.setOrigin(0.5);
         playButton.setInteractive({ useHandCursor: true });
 
-        // Efekty hover
+        // Efekty hover dla głównego przycisku Play
         playButton.on('pointerover', () => {
             playButton.setScale(1.1);
             playButton.setStyle({ fill: '#0000ff' });
@@ -53,17 +98,17 @@ export default class MenuScene extends Phaser.Scene {
             playButton.setStyle({ fill: '#000' });
         });
 
-        // Rozpoczęcie gry po kliknięciu
+        // Rozpoczęcie gry od pierwszego poziomu
         playButton.on('pointerdown', () => {
-            this.startGame();
+            this.startGame(0);
         });
     }
 
-    startGame() {
+    startGame(levelIndex) {
         // Efekt przejścia
         this.cameras.main.fade(500, 0, 0, 0);
         this.time.delayedCall(500, () => {
-            this.scene.start('GameScene');
+            this.scene.start('GameScene', { level: levelIndex });
         });
     }
 } 

@@ -1,48 +1,62 @@
 import Phaser from 'phaser';
+import { levels } from '../config/levels';
 
 export default class GameScene extends Phaser.Scene {
     constructor() {
         super({ key: 'GameScene' });
+        this.currentLevel = 0;
     }
 
-    preload() {
-        console.log('Preload started');
+    init(data) {
+        this.currentLevel = data.level || 0;
     }
 
     create() {
-        console.log('Create started');
+        console.log('Create started - Level:', this.currentLevel + 1);
         
         // Inicjalizacja żyć
         this.lives = 3;
         
+        // Załaduj konfigurację poziomu
+        const levelConfig = levels[this.currentLevel];
+        
         // Dodaj platformy
         this.platforms = this.physics.add.staticGroup();
-        this.platforms.add(this.add.rectangle(400, 568, 800, 32, 0x8B4513));
-        this.platforms.add(this.add.rectangle(600, 450, 200, 32, 0x8B4513));
-        this.platforms.add(this.add.rectangle(50, 350, 200, 32, 0x8B4513));
+        levelConfig.platforms.forEach(platform => {
+            this.platforms.add(
+                this.add.rectangle(platform.x, platform.y, platform.width, platform.height, 0x8B4513)
+            );
+        });
         
-        // Dodaj gracza - pingwina
-        this.player = this.add.text(100, 450, '🐧', {
+        // Dodaj gracza
+        const playerConfig = levelConfig.player;
+        this.player = this.add.text(playerConfig.x, playerConfig.y, '🐧', {
             fontSize: '40px'
         });
         this.player.setOrigin(0.5);
         this.physics.add.existing(this.player);
         this.player.body.setBounce(0.2);
         this.player.body.setCollideWorldBounds(true);
-        
-        // Dostosowanie hitboxa gracza
         this.player.body.setSize(30, 35);
         this.player.body.setOffset(5, 5);
-        
-        // Dodanie właściwości kierunku dla animacji
-        this.playerDirection = 1; // 1 prawo, -1 lewo
+        this.playerDirection = 1;
         
         // Dodaj przeciwników
         this.enemies = this.physics.add.group();
-        this.createEnemies();
+        levelConfig.enemies.forEach(enemy => {
+            this.createEnemy(enemy);
+        });
         
-        // Dodaj punkt końcowy (galaktyka)
-        this.finishPoint = this.add.text(750, 250, '🌌', {
+        // Dodaj monety
+        this.coins = this.physics.add.staticGroup();
+        levelConfig.coins.forEach(coin => {
+            const coinSprite = this.add.circle(coin.x, coin.y, 8, 0xFFD700);
+            this.coins.add(coinSprite);
+        });
+        
+        // Dodaj punkt końcowy
+        const finishConfig = levelConfig.finish;
+        this.finishPoint = this.add.text(finishConfig.x, finishConfig.y, '🌌', {
             fontSize: '50px'
         });
         this.finishPoint.setOrigin(0.5);
@@ -50,11 +64,7 @@ export default class GameScene extends Phaser.Scene {
         this.finishPoint.body.setSize(40, 40);
         this.finishPoint.body.setOffset(5, 5);
         
-        // Dodaj monety
-        this.coins = this.physics.add.staticGroup();
-        this.createCoins();
-        
-        // Dodaj UI (punkty i życia)
+        // Dodaj UI
         this.score = 0;
         this.scoreText = this.add.text(16, 16, 'Punkty: 0', {
             fontSize: '32px',
@@ -66,65 +76,46 @@ export default class GameScene extends Phaser.Scene {
             fill: '#000'
         });
         
-        // Dodaj kolizje
+        // Dodaj numer poziomu
+        this.levelText = this.add.text(16, 96, `Poziom ${this.currentLevel + 1}`, {
+            fontSize: '32px',
+            fill: '#000'
+        });
+        
+        // Kolizje
         this.physics.add.collider(this.player, this.platforms);
         this.physics.add.collider(this.enemies, this.platforms);
         this.physics.add.overlap(this.player, this.coins, this.collectCoin, null, this);
         this.physics.add.overlap(this.player, this.finishPoint, this.winLevel, null, this);
         this.physics.add.overlap(this.player, this.enemies, this.handleEnemyCollision, null, this);
         
-        // Dodaj sterowanie
+        // Sterowanie
         this.cursors = this.input.keyboard.createCursorKeys();
-        
-        // Flaga nieśmiertelności (po uderzeniu)
         this.isInvulnerable = false;
-        
-        // Zasięg wykrywania gracza
         this.detectionRange = 200;
     }
 
-    createEnemies() {
-        const enemyPositions = [
-            { x: 300, y: 300, direction: 1 },
-            { x: 600, y: 400, direction: -1 },
-            { x: 450, y: 200, direction: 1 }
-        ];
-        
-        enemyPositions.forEach(pos => {
-            const enemy = this.add.text(pos.x, pos.y, '🦟', {
-                fontSize: '32px'
-            });
-            
-            enemy.setOrigin(0.5);
-            this.physics.add.existing(enemy);
-            this.enemies.add(enemy);
-            
-            // Ustawienie właściwości fizycznych
-            enemy.direction = pos.direction;
-            enemy.baseSpeed = 100;
-            enemy.chaseSpeed = 150;
-            enemy.body.setVelocityX(enemy.baseSpeed * pos.direction);
-            enemy.body.setBounce(0);
-            enemy.body.setCollideWorldBounds(true);
-            enemy.body.setSize(25, 25);
-            enemy.body.setOffset(4, 4);
-            
-            // Dodaj właściwość isChasing
-            enemy.isChasing = false;
+    createEnemy(enemy) {
+        const enemySprite = this.add.text(enemy.x, enemy.y, '🦟', {
+            fontSize: '32px'
         });
-    }
-
-    createCoins() {
-        const positions = [
-            { x: 300, y: 400 },
-            { x: 450, y: 300 },
-            { x: 600, y: 350 }
-        ];
         
-        positions.forEach(pos => {
-            const coin = this.add.circle(pos.x, pos.y, 8, 0xFFD700);
-            this.coins.add(coin);
-        });
+        enemySprite.setOrigin(0.5);
+        this.physics.add.existing(enemySprite);
+        this.enemies.add(enemySprite);
+        
+        // Ustawienie właściwości fizycznych
+        enemySprite.direction = enemy.direction;
+        enemySprite.baseSpeed = 100;
+        enemySprite.chaseSpeed = 150;
+        enemySprite.body.setVelocityX(enemySprite.baseSpeed * enemy.direction);
+        enemySprite.body.setBounce(0);
+        enemySprite.body.setCollideWorldBounds(true);
+        enemySprite.body.setSize(25, 25);
+        enemySprite.body.setOffset(4, 4);
+        
+        // Dodaj właściwość isChasing
+        enemySprite.isChasing = false;
     }
 
     hitEnemy(player, enemy) {
@@ -202,7 +193,13 @@ export default class GameScene extends Phaser.Scene {
     winLevel(player, finishPoint) {
         this.physics.pause();
         
-        const winText = this.add.text(400, 300, 'Poziom ukończony!\nPunkty: ' + this.score, {
+        const nextLevel = this.currentLevel + 1;
+        const isLastLevel = nextLevel >= levels.length;
+        
+        const winText = this.add.text(400, 250, 
+            isLastLevel ? 
+            'Gratulacje!\nUkończyłeś wszystkie poziomy!\nPunkty: ' + this.score :
+            'Poziom ukończony!\nPunkty: ' + this.score, {
             fontSize: '48px',
             fill: '#000',
             backgroundColor: '#fff',
@@ -211,8 +208,9 @@ export default class GameScene extends Phaser.Scene {
         });
         winText.setOrigin(0.5);
         
-        // Dodaj przycisk powrotu do menu
-        const menuButton = this.add.text(400, 400, 'Powrót do Menu', {
+        // Przycisk do następnego poziomu lub powrotu do menu
+        const buttonText = isLastLevel ? 'Powrót do Menu' : 'Następny Poziom';
+        const menuButton = this.add.text(400, 400, buttonText, {
             fontSize: '32px',
             fill: '#000',
             backgroundColor: '#fff',
@@ -232,16 +230,11 @@ export default class GameScene extends Phaser.Scene {
         });
 
         menuButton.on('pointerdown', () => {
-            this.scene.start('MenuScene');
-        });
-        
-        // Animacja punktu końcowego
-        this.tweens.add({
-            targets: finishPoint,
-            scale: 1.2,
-            duration: 200,
-            yoyo: true,
-            repeat: 4
+            if (isLastLevel) {
+                this.scene.start('MenuScene');
+            } else {
+                this.scene.restart({ level: nextLevel });
+            }
         });
     }
 
