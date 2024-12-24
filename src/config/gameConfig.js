@@ -3,6 +3,7 @@ export default {
   parent: 'game',
   width: 800,
   height: 600,
+  backgroundColor: '#99CCFF',
   physics: {
     default: 'arcade',
     arcade: {
@@ -10,5 +11,8 @@ export default {
       debug: false
     }
   },
-  pixelArt: true
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH
+  }
 }; 
