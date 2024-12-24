@@ -3,6 +3,7 @@ import MenuScene from './scenes/MenuScene';
 import GameScene from './scenes/GameScene';
 import LevelSelectScene from './scenes/LevelSelectScene';
 import InstructionScene from './scenes/InstructionScene';
+import LevelEditorScene from './scenes/LevelEditorScene';
 
 const config = {
     type: Phaser.AUTO,
@@ -17,7 +18,7 @@ const config = {
             debug: false
         }
     },
-    scene: [MenuScene, GameScene, LevelSelectScene, InstructionScene]
+    scene: [MenuScene, GameScene, LevelSelectScene, InstructionScene, LevelEditorScene]
 };
 
 window.onload = () => {
